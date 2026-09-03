@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cryso — Software, Web, Roblox, Minecraft, Discord</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#050708;
+    --void-2:#080C0E;
+    --panel:#0A1518;
+    --panel-2:#0D1C20;
+    --cyan:#00F0FF;
+    --cyan-dim:#0AA9B8;
+    --cyan-soft:rgba(0,240,255,0.5);
+    --ink:#DFFBFF;
+    --ink-dim:#7FB8BF;
+    --line:#124048;
+    --danger:#FF4470;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse 900px 500px at 20% -10%, rgba(0,240,255,0.10), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 90% 20%, rgba(0,240,255,0.06), transparent 55%),
+      var(--void);
+    color:var(--ink);
+    font-family:'JetBrains Mono', monospace;
+    line-height:1.6;
+    position:relative;
+  }
+  ::selection{background:var(--cyan); color:var(--void);}
+  a{color:inherit;}
+
+  .display{
+    font-family:'Orbitron', sans-serif;
+    letter-spacing:0.01em;
+  }
+
+  .wrap{
+    max-width:920px;
+    margin:0 auto;
+    padding:0 24px;
+    position:relative;
+    z-index:1;
+  }
+
+  /* cyan grid + scanline atmosphere */
+  .grain{
+    position:fixed; inset:0; pointer-events:none; z-index:0;
+    background-image:
+      linear-gradient(rgba(0,240,255,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,240,255,0.05) 1px, transparent 1px);
+    background-size: 42px 42px;
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 70%);
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 70%);
+  }
+  .scanline{
+    position:fixed; inset:0; pointer-events:none; z-index:2; opacity:0.035;
+    background:repeating-linear-gradient(0deg, #000 0px, #000 1px, transparent 1px, transparent 3px);
+    mix-blend-mode:overlay;
+  }
+
+  .glow-text{
+    text-shadow: 0 0 6px var(--cyan-soft), 0 0 22px rgba(0,240,255,0.35);
+  }
+
+  header{
+    padding:110px 0 70px;
+    position:relative;
+  }
+  .brand-row{
+    display:flex; align-items:center; gap:14px; margin-bottom:34px;
+  }
+  .brand-blocks{ display:flex; gap:4px; }
+  .brand-blocks span{
+    width:14px; height:14px; display:block;
+    background:var(--cyan);
+    box-shadow:0 0 8px var(--cyan), 0 0 18px rgba(0,240,255,0.6);
+  }
+  .brand-blocks span:nth-child(2){ opacity:0.75; }
+  .brand-blocks span:nth-child(3){ opacity:0.5; }
+  .brand-blocks span:nth-child(4){ opacity:0.3; }
+  .brand-name{font-size:15px; color:var(--ink-dim); letter-spacing:0.14em;}
+
+  h1.hero{
+    font-size:clamp(48px, 8.5vw, 88px);
+    margin:0 0 18px;
+    color:var(--ink);
+    line-height:1.02;
+    font-weight:800;
+  }
+  h1.hero .accent{
+    color:var(--cyan);
+    text-shadow: 0 0 8px var(--cyan-soft), 0 0 30px rgba(0,240,255,0.45), 0 0 60px rgba(0,240,255,0.2);
+  }
+
+  .hero-sub{
+    max-width:520px;
+    font-size:16px;
+    color:var(--ink-dim);
+    margin:0 0 36px;
+  }
+
+  .cta-row{ display:flex; gap:14px; flex-wrap:wrap; }
+  .btn{
+    display:inline-block;
+    padding:12px 22px;
+    border:1px solid var(--line);
+    background:var(--panel);
+    color:var(--ink);
+    text-decoration:none;
+    font-size:14px;
+    font-weight:500;
+    cursor:pointer;
+    transition:border-color .15s ease, background .15s ease, box-shadow .15s ease;
+  }
+  .btn:hover{ border-color:var(--cyan-dim); background:var(--panel-2); box-shadow:0 0 16px rgba(0,240,255,0.18); }
+  .btn.primary{
+    background:var(--cyan); border-color:var(--cyan); color:#00181A; font-weight:700;
+    box-shadow:0 0 14px rgba(0,240,255,0.45), 0 0 40px rgba(0,240,255,0.15);
+  }
+  .btn.primary:hover{ background:#4CF6FF; border-color:#4CF6FF; box-shadow:0 0 22px rgba(0,240,255,0.7), 0 0 60px rgba(0,240,255,0.25); }
+
+  section{ padding:64px 0; border-top:1px solid var(--line); position:relative; }
+
+  .section-head{
+    display:flex; align-items:baseline; justify-content:space-between;
+    margin-bottom:36px; flex-wrap:wrap; gap:10px;
+  }
+  .section-head h2{
+    font-family:'Orbitron', sans-serif;
+    font-weight:800;
+    font-size:28px;
+    margin:0;
+    color:var(--ink);
+  }
+  .section-note{ color:var(--ink-dim); font-size:13px; max-width:340px; text-align:right;}
+
+  /* services */
+  .services{
+    display:grid; grid-template-columns:1fr 1fr; gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+  }
+  .service{
+    background:var(--void-2);
+    padding:26px;
+    transition:background .15s ease, box-shadow .15s ease;
+  }
+  .service:hover{ background:var(--panel); box-shadow:inset 0 0 24px rgba(0,240,255,0.06); }
+  .service h3{ margin:0 0 8px; font-size:17px; color:var(--cyan); font-weight:700;}
+  .service p{ margin:0 0 14px; font-size:13.5px; color:var(--ink-dim); }
+  .price{ font-size:13px; color:var(--cyan-dim); font-weight:700; }
+
+  /* playground */
+  .console{
+    border:1px solid var(--line);
+    background:#020506;
+    box-shadow:0 0 40px rgba(0,240,255,0.06);
+  }
+  .console-tabs{
+    display:flex; flex-wrap:wrap; border-bottom:1px solid var(--line);
+  }
+  .console-tabs button{
+    flex:1; min-width:110px;
+    background:var(--panel);
+    color:var(--ink-dim);
+    border:none; border-right:1px solid var(--line);
+    padding:12px 10px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    font-weight:700;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .console-tabs button:last-child{ border-right:none; }
+  .console-tabs button:hover{ color:var(--ink); }
+  .console-tabs button.active{ background:#020506; color:var(--cyan); box-shadow:inset 0 -2px 0 var(--cyan); }
+  .console-body{ padding:18px; }
+  .console-desc{ font-size:12.5px; color:var(--ink-dim); margin:0 0 12px; }
+  textarea#code-input{
+    width:100%; min-height:130px;
+    background:#010304; color:var(--ink);
+    border:1px solid var(--line);
+    padding:12px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    resize:vertical;
+  }
+  textarea#code-input:focus{ border-color:var(--cyan-dim); box-shadow:0 0 12px rgba(0,240,255,0.2); }
+  .console-actions{
+    display:flex; align-items:center; gap:12px; margin:12px 0;
+  }
+  #run-btn{ padding:10px 20px; }
+  .run-hint{ font-size:11.5px; color:var(--ink-dim); }
+  #output{
+    background:#010304; border:1px solid var(--line);
+    padding:12px; min-height:52px;
+    font-size:13px; white-space:pre-wrap; word-break:break-word;
+    color:var(--cyan);
+    text-shadow:0 0 6px rgba(0,240,255,0.35);
+  }
+  #output.err{ color:var(--danger); text-shadow:0 0 6px rgba(255,68,112,0.4); }
+
+  /* projects */
+  .projects{ display:flex; flex-direction:column; gap:1px; background:var(--line); border:1px solid var(--line);}
+  .project{
+    background:var(--void-2);
+    padding:22px 26px;
+    display:grid;
+    grid-template-columns:130px 1fr auto;
+    gap:18px;
+    align-items:start;
+    transition:background .15s ease;
+  }
+  .project:hover{ background:var(--panel); }
+  .project .tag{
+    font-size:11px; letter-spacing:0.04em;
+    background:var(--cyan); color:#00181A;
+    padding:3px 8px; display:inline-block; width:fit-content; font-weight:700;
+    box-shadow:0 0 10px rgba(0,240,255,0.4);
+  }
+  .project h3{ margin:0 0 6px; font-size:16px; color:var(--ink); }
+  .project p{ margin:0; font-size:13px; color:var(--ink-dim); }
+  .project .stack{ font-size:11.5px; color:var(--cyan-dim); text-align:right; align-self:start; }
+
+  footer{
+    padding:60px 0 80px; text-align:center;
+    color:var(--ink-dim); font-size:13px;
+  }
+  footer .btn{ margin-top:14px; }
+
+  @media (max-width: 640px){
+    .services{ grid-template-columns:1fr; }
+    .project{ grid-template-columns:1fr; }
+    .project .stack{ text-align:left; }
+    .section-note{ text-align:left; max-width:none; }
+  }
+
+  :focus-visible{ outline:2px solid var(--cyan); outline-offset:2px; }
+  @media (prefers-reduced-motion: reduce){ html{ scroll-behavior:auto; } }
+
+  /* --- cinematic boot intro --- */
+  #boot{
+    position:fixed; inset:0; z-index:999;
+    background:#000;
+    display:flex; align-items:center; justify-content:center;
+    flex-direction:column;
+    transition:opacity .7s ease, visibility .7s ease;
+  }
+  #boot.hide{ opacity:0; visibility:hidden; pointer-events:none; }
+
+  #boot-logo{
+    font-family:'Orbitron', sans-serif;
+    font-weight:900;
+    font-size:clamp(30px, 12vw, 130px);
+    letter-spacing:0.02em;
+    color:var(--ink-dim);
+    opacity:0;
+    transform:scale(0.9);
+    text-align:center;
+    max-width:92vw;
+    padding:0 12px;
+    white-space:nowrap;
+  }
+  @media (max-width:420px){
+    #boot-logo{ letter-spacing:0; font-size:clamp(26px, 11.5vw, 130px); }
+  }
+  #boot-logo.flash{
+    animation:flashin 2.1s cubic-bezier(.2,.7,.2,1) forwards;
+  }
+  @keyframes flashin{
+    0%{ opacity:0; transform:scale(0.8) translateX(0); }
+    30%{ opacity:1; color:var(--cyan); text-shadow:0 0 34px var(--cyan), 0 0 100px rgba(0,240,255,0.7), 0 0 180px rgba(0,240,255,0.35); transform:scale(1.1) translateX(0); }
+    36%{ transform:scale(1.08) translateX(-14px); }
+    42%{ transform:scale(1.08) translateX(12px); }
+    48%{ transform:scale(1.07) translateX(-10px); }
+    54%{ transform:scale(1.07) translateX(9px); }
+    60%{ transform:scale(1.06) translateX(-6px); }
+    66%{ transform:scale(1.06) translateX(6px); }
+    72%{ transform:scale(1.04) translateX(-3px); }
+    78%{ transform:scale(1.03) translateX(3px); }
+    86%{ transform:scale(1.01) translateX(0); }
+    100%{ opacity:1; color:var(--ink); text-shadow:0 0 16px var(--cyan-soft), 0 0 50px rgba(0,240,255,0.25); transform:scale(1) translateX(0); }
+  }
+
+  body.pre-boot{ overflow:hidden; }
+  body.pre-boot .wrap{ opacity:0; }
+  .wrap{
+    transition:opacity .9s ease .1s, filter .9s ease .1s;
+  }
+  body.boot-done .wrap{ opacity:1; }
+  @media (prefers-reduced-motion: reduce){
+    #boot{ display:none; }
+    body.pre-boot .wrap{ opacity:1; }
+  }
+</style>
+</head>
+<body class="pre-boot">
+<div id="boot" aria-hidden="true">
+  <div id="boot-logo">CRYSO.DEV</div>
+</div>
+<div class="grain"></div>
+<div class="scanline"></div>
+
+<div class="wrap">
+
+  <header>
+    <div class="brand-row">
+      <div class="brand-blocks"><span></span><span></span><span></span><span></span></div>
+      <div class="brand-name">CRYSO.DEV</div>
+    </div>
+    <h1 class="hero display">One dev. <span class="accent">Every stack.</span></h1>
+    <p class="hero-sub">Software, web, Roblox, Minecraft, and Discord systems — built to spec and shipped fast. If it runs on a server or a client, I can build it.</p>
+    <div class="cta-row">
+      <a class="btn primary" href="#playground">See it run →</a>
+      <a class="btn" href="#contact">Get a quote</a>
+    </div>
+  </header>
+
+  <section id="services">
+    <div class="section-head">
+      <h2 class="display">What I build</h2>
+      <div class="section-note">Pricing starts from ₹100 depending on scope — message for a quote.</div>
+    </div>
+    <div class="services">
+      <div class="service">
+        <h3>Discord Bots</h3>
+        <p>Moderation, automod, music, leveling, custom commands — built from scratch or ported from what you already use.</p>
+        <div class="price">from ₹100</div>
+      </div>
+      <div class="service">
+        <h3>Minecraft Plugins</h3>
+        <p>Custom gameplay mechanics, admin tools, economy systems, integrations with your Discord — Spigot/Paper.</p>
+        <div class="price">from ₹100</div>
+      </div>
+      <div class="service">
+        <h3>Roblox Scripting</h3>
+        <p>Game systems, UI, and server-side logic in Luau — built for performance and easy handoff.</p>
+        <div class="price">from ₹100</div>
+      </div>
+      <div class="service">
+        <h3>Web Development</h3>
+        <p>Portfolio sites, dashboards, and small web apps — like the one you're looking at right now.</p>
+        <div class="price">from ₹100</div>
+      </div>
+      <div class="service">
+        <h3>Server Setup</h3>
+        <p>Full SMP or community server setup: config, plugin stack, backups, and the boring infra work done right.</p>
+        <div class="price">quote on request</div>
+      </div>
+      <div class="service">
+        <h3>Bug Fixes</h3>
+        <p>Inherited a broken bot, plugin, or script? I read other people's code so you don't have to.</p>
+        <div class="price">from ₹100</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="playground">
+    <div class="section-head">
+      <h2 class="display">Every language, actually running</h2>
+      <div class="section-note">Six languages, not a screenshot — pick one, hit run, it executes live in your browser.</div>
+    </div>
+
+    <div class="console">
+      <div class="console-tabs" id="tabs">
+        <button data-lang="js" class="active">JavaScript</button>
+        <button data-lang="pyl">Python-lite</button>
+        <button data-lang="lua">Lua</button>
+        <button data-lang="lisp">Lisp</button>
+        <button data-lang="rpn">Forth (RPN)</button>
+        <button data-lang="bf">Brainfuck</button>
+      </div>
+      <div class="console-body">
+        <p class="console-desc" id="lang-desc"></p>
+        <textarea id="code-input" spellcheck="false"></textarea>
+        <div class="console-actions">
+          <button class="btn primary" id="run-btn">Run ▶</button>
+          <span class="run-hint">Edit the code above before running — it's real.</span>
+        </div>
+        <div id="output">// output appears here</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="work">
+    <div class="section-head">
+      <h2 class="display">Recent work</h2>
+      <div class="section-note">A few things shipped or in progress.</div>
+    </div>
+    <div class="projects">
+      <div class="project">
+        <span class="tag">DISCORD BOT</span>
+        <div>
+          <h3>Guardian</h3>
+          <p>A full Wick-premium-tier moderation bot: anti-raid detection, automod, server backup/restore, audit logging, and escalating punishment tiers.</p>
+        </div>
+        <div class="stack">anti-raid · automod<br>backup/restore</div>
+      </div>
+      <div class="project">
+        <span class="tag">DISCORD BOT</span>
+        <div>
+          <h3>MineTone</h3>
+          <p>A music bot with a live-updating "now playing" card in a blue ocean theme — track name, details, and elapsed time refresh in real time.</p>
+        </div>
+        <div class="stack">music · live embeds</div>
+      </div>
+      <div class="project">
+        <span class="tag">MC SERVER</span>
+        <div>
+          <h3>Community SMP</h3>
+          <p>A public survival multiplayer server built for a real community, not just friends — server setup and infra done from the ground up.</p>
+        </div>
+        <div class="stack">Paper/Spigot · infra</div>
+      </div>
+      <div class="project">
+        <span class="tag">WEB</span>
+        <div>
+          <h3>This site</h3>
+          <p>A one-file portfolio with six real language interpreters running client-side — no backend, no build step.</p>
+        </div>
+        <div class="stack">HTML/CSS/JS</div>
+      </div>
+    </div>
+  </section>
+
+  <footer id="contact">
+    <div class="display glow-text" style="font-size:26px; color:var(--ink);">Got a server that needs work?</div>
+    <p>DM on Discord for a quote — most jobs priced and started same day.</p>
+    <a class="btn primary" href="#" onclick="return false;">Message on Discord</a>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  const boot = document.getElementById('boot');
+  const logo = document.getElementById('boot-logo');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // --- tiny synth, no audio files needed ---
+  let actx;
+  function getCtx(){
+    if(!actx){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(AC) actx = new AC();
+    }
+    if(actx && actx.state === 'suspended') actx.resume();
+    return actx;
+  }
+  function powerUpSweep(){
+    const ctx = getCtx();
+    if(!ctx) return;
+    const now = ctx.currentTime;
+    // layered sub + detuned rise for a fuller "whoosh"
+    [ [110, 0], [113, 3] ].forEach(([freq, detune]) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.detune.value = detune;
+      osc.frequency.setValueAtTime(freq, now);
+      osc.frequency.exponentialRampToValueAtTime(freq * 8, now + 0.62);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.055, now + 0.12);
+      gain.gain.linearRampToValueAtTime(0.0001, now + 0.68);
+      const filt = ctx.createBiquadFilter();
+      filt.type = 'lowpass';
+      filt.frequency.setValueAtTime(350, now);
+      filt.frequency.exponentialRampToValueAtTime(5000, now + 0.6);
+      osc.connect(filt).connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.7);
+    });
+    // airy noise riser underneath
+    const bufSize = ctx.sampleRate * 0.6;
+    const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for(let i=0;i<bufSize;i++) data[i] = (Math.random()*2-1) * (i/bufSize);
+    const noise = ctx.createBufferSource();
+    noise.buffer = buf;
+    const noiseFilt = ctx.createBiquadFilter();
+    noiseFilt.type = 'bandpass';
+    noiseFilt.frequency.setValueAtTime(400, now);
+    noiseFilt.frequency.exponentialRampToValueAtTime(3500, now + 0.6);
+    noiseFilt.Q.value = 0.7;
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0, now);
+    noiseGain.gain.linearRampToValueAtTime(0.05, now + 0.5);
+    noiseGain.gain.linearRampToValueAtTime(0, now + 0.62);
+    noise.connect(noiseFilt).connect(noiseGain).connect(ctx.destination);
+    noise.start(now);
+  }
+  function shimmerPeak(){
+    const ctx = getCtx();
+    if(!ctx) return;
+    const now = ctx.currentTime;
+    // quick bell-like arpeggio right as the glow peaks
+    [1760, 2217, 2637].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const t0 = now + i * 0.035;
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(0.035, t0 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.5);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(t0);
+      osc.stop(t0 + 0.55);
+    });
+  }
+  function impactThump(){
+    const ctx = getCtx();
+    if(!ctx) return;
+    const now = ctx.currentTime;
+    // deep kick
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(170, now);
+    osc.frequency.exponentialRampToValueAtTime(38, now + 0.32);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.38);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.4);
+    // metallic click layer for a "hit" edge
+    const click = ctx.createOscillator();
+    const clickGain = ctx.createGain();
+    click.type = 'square';
+    click.frequency.setValueAtTime(900, now);
+    click.frequency.exponentialRampToValueAtTime(120, now + 0.08);
+    clickGain.gain.setValueAtTime(0.05, now);
+    clickGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+    click.connect(clickGain).connect(ctx.destination);
+    click.start(now);
+    click.stop(now + 0.1);
+    // gritty noise burst
+    const bufSize = ctx.sampleRate * 0.18;
+    const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for(let i=0;i<bufSize;i++) data[i] = (Math.random()*2-1) * Math.pow(1 - i/bufSize, 2);
+    const noise = ctx.createBufferSource();
+    noise.buffer = buf;
+    const noiseFilt = ctx.createBiquadFilter();
+    noiseFilt.type = 'highpass';
+    noiseFilt.frequency.value = 700;
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.06, now);
+    noise.connect(noiseFilt).connect(noiseGain).connect(ctx.destination);
+    noise.start(now);
+  }
+
+  function finishBoot(){
+    document.body.classList.remove('pre-boot');
+    document.body.classList.add('boot-done');
+    boot.classList.add('hide');
+    setTimeout(() => { boot.style.display = 'none'; }, 900);
+  }
+
+  // unlock audio on first interaction if autoplay was blocked
+  ['pointerdown','keydown'].forEach(evt => {
+    window.addEventListener(evt, () => getCtx(), { once:true, passive:true });
+  });
+
+  if(reduceMotion){
+    finishBoot();
+  } else {
+    getCtx();
+    const startDelay = 400;
+    setTimeout(() => {
+      logo.classList.add('flash');
+      powerUpSweep();
+    }, startDelay);
+    // shimmer right as glow peaks (~30% of the 2.1s animation)
+    setTimeout(shimmerPeak, startDelay + 600);
+    // shake begins ~36% into the 2.1s flash animation
+    setTimeout(impactThump, startDelay + 720);
+
+    setTimeout(finishBoot, startDelay + 2100 + 700);
+  }
+})();
+</script>
+<script>
+(function(){
+  const examples = {
+    bf: {
+      desc: "Brainfuck — an 8-instruction esoteric language. This prints a message character by character via pure pointer arithmetic.",
+      code: "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++."
+    },
+    lisp: {
+      desc: "A tiny Lisp — define, lambda, and arithmetic. Calculates a batch quote: base price × item count, with a bulk discount.",
+      code: "(define base 100)\n(define items 12)\n(define discount (lambda (n) (if (> n 10) 0.9 1)))\n(* base items (discount items))"
+    },
+    rpn: {
+      desc: "Forth-style reverse-Polish stack calculator. Push numbers, apply operators — no parentheses needed.",
+      code: "100 12 * .9 * ."
+    },
+    js: {
+      desc: "Plain JavaScript, evaluated live — generates a sample Discord embed payload.",
+      code: "const embed = {\n  title: \"Now Playing\",\n  description: \"Server Theme - Ocean Mix\",\n  color: 0x3B5FC4\n};\nJSON.stringify(embed, null, 2);"
+    },
+    pyl: {
+      desc: "Python-lite — a small subset (variables, print, arithmetic) parsed and run live, no server round-trip.",
+      code: "base = 100\nitems = 12\ndiscount = 0.9\nprint(\"quote:\", base * items * discount)"
+    },
+    lua: {
+      desc: "Lua — the language Roblox scripting runs on. Variables, print, and arithmetic, evaluated live.",
+      code: "local base = 100\nlocal items = 12\nlocal discount = 0.9\nprint(\"quote:\", base * items * discount)"
+    }
+  };
+
+  const tabsEl = document.getElementById('tabs');
+  const input = document.getElementById('code-input');
+  const desc = document.getElementById('lang-desc');
+  const output = document.getElementById('output');
+  let current = 'bf';
+
+  function loadLang(lang){
+    current = lang;
+    [...tabsEl.children].forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+    desc.textContent = examples[lang].desc;
+    input.value = examples[lang].code;
+    output.textContent = "// output appears here";
+    output.classList.remove('err');
+  }
+
+  tabsEl.addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if(!btn) return;
+    loadLang(btn.dataset.lang);
+  });
+
+  function runBrainfuck(src){
+    const mem = new Uint8Array(30000);
+    let ptr = 0, out = '';
+    const ops = src.split('').filter(c => '+-<>[].,'.includes(c));
+    const jumps = {};
+    const stack = [];
+    for(let i=0;i<ops.length;i++){
+      if(ops[i]==='[') stack.push(i);
+      else if(ops[i]===']'){
+        const j = stack.pop();
+        jumps[j]=i; jumps[i]=j;
+      }
+    }
+    let i=0, steps=0;
+    while(i<ops.length){
+      if(++steps > 2000000) throw new Error('too many steps — infinite loop?');
+      const op = ops[i];
+      if(op==='+') mem[ptr] = (mem[ptr]+1)&255;
+      else if(op==='-') mem[ptr] = (mem[ptr]-1)&255;
+      else if(op==='>') ptr = (ptr+1)%mem.length;
+      else if(op==='<') ptr = (ptr-1+mem.length)%mem.length;
+      else if(op==='.') out += String.fromCharCode(mem[ptr]);
+      else if(op==='[' && mem[ptr]===0) i = jumps[i];
+      else if(op===']' && mem[ptr]!==0) i = jumps[i];
+      i++;
+    }
+    return out || '(no output)';
+  }
+
+  // --- tiny Lisp ---
+  function tokenizeLisp(s){
+    return s.replace(/\(/g,' ( ').replace(/\)/g,' ) ').trim().split(/\s+/);
+  }
+  function parseLisp(tokens){
+    if(tokens.length===0) throw new Error('unexpected EOF');
+    const t = tokens.shift();
+    if(t==='('){
+      const list=[];
+      while(tokens[0]!==')') list.push(parseLisp(tokens));
+      tokens.shift();
+      return list;
+    } else if(t===')'){
+      throw new Error('unexpected )');
+    } else {
+      const n = parseFloat(t);
+      return isNaN(n) ? t : n;
+    }
+  }
+  function evalLisp(expr, env){
+    if(typeof expr === 'number') return expr;
+    if(typeof expr === 'string') {
+      if(expr in env) return env[expr];
+      throw new Error('unbound symbol: '+expr);
+    }
+    const [op, ...args] = expr;
+    if(op==='define'){ env[args[0]] = evalLisp(args[1], env); return env[args[0]]; }
+    if(op==='if'){ return evalLisp(args[0],env) ? evalLisp(args[1],env) : evalLisp(args[2],env); }
+    if(op==='lambda'){
+      const [params, body] = args;
+      return (...vals) => {
+        const local = Object.create(env);
+        params.forEach((p,idx)=> local[p]=vals[idx]);
+        return evalLisp(body, local);
+      };
+    }
+    const fn = {'+':(...a)=>a.reduce((x,y)=>x+y),
+                '-':(...a)=>a.reduce((x,y)=>x-y),
+                '*':(...a)=>a.reduce((x,y)=>x*y),
+                '/':(...a)=>a.reduce((x,y)=>x/y),
+                '>':(a,b)=>a>b, '<':(a,b)=>a<b, '=':(a,b)=>a===b}[op];
+    const vals = args.map(a=>evalLisp(a,env));
+    if(fn) return fn(...vals);
+    const f = evalLisp(op, env);
+    return f(...vals);
+  }
+  function runLisp(src){
+    const env = {};
+    let result;
+    // support multiple top-level forms separated by newlines
+    const forms = [];
+    let depth=0, buf='';
+    for(const ch of src){
+      buf+=ch;
+      if(ch==='(') depth++;
+      if(ch===')'){ depth--; if(depth===0){ forms.push(buf); buf=''; } }
+    }
+    for(const f of forms){
+      const trimmed = f.trim();
+      if(!trimmed) continue;
+      result = evalLisp(parseLisp(tokenizeLisp(trimmed)), env);
+    }
+    return String(result);
+  }
+
+  // --- RPN / Forth-ish ---
+  function runRPN(src){
+    const stack = [];
+    const tokens = src.trim().split(/\s+/);
+    for(const t of tokens){
+      if(t==='.'){ if(stack.length===0) throw new Error('stack empty at .'); continue; }
+      const n = parseFloat(t);
+      if(!isNaN(n)){ stack.push(n); continue; }
+      if('+-*/'.includes(t)){
+        const b = stack.pop(), a = stack.pop();
+        if(a===undefined||b===undefined) throw new Error('stack underflow at '+t);
+        stack.push(t==='+'?a+b:t==='-'?a-b:t==='*'?a*b:a/b);
+        continue;
+      }
+      throw new Error('unknown token: '+t);
+    }
+    return 'stack: [' + stack.join(', ') + ']';
+  }
+
+  // --- Python-lite: variables, print(...), arithmetic ---
+  function runPythonLite(src){
+    const env = {};
+    const lines = src.split('\n').map(l=>l.trim()).filter(Boolean);
+    let out = [];
+    function evalExpr(expr){
+      expr = expr.trim();
+      // replace bare identifiers with env lookups, leave numbers/strings/operators alone
+      const js = expr.replace(/(["'][^"']*["'])|([A-Za-z_][A-Za-z0-9_]*)/g, (m, str, ident) => {
+        if(str) return str;
+        if(ident in env) return JSON.stringify(env[ident]);
+        if(['and','or','not'].includes(ident)) return {'and':'&&','or':'||','not':'!'}[ident];
+        throw new Error('unbound name: '+ident);
+      });
+      // eslint-disable-next-line no-new-func
+      return Function('"use strict"; return (' + js + ')')();
+    }
+    for(const line of lines){
+      const printMatch = line.match(/^print\((.*)\)$/);
+      if(printMatch){
+        const parts = printMatch[1].split(',').map(p=>{
+          const t = p.trim();
+          if(/^["'].*["']$/.test(t)) return t.slice(1,-1);
+          return String(evalExpr(t));
+        });
+        out.push(parts.join(' '));
+        continue;
+      }
+      const assignMatch = line.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+)$/);
+      if(assignMatch){
+        env[assignMatch[1]] = evalExpr(assignMatch[2]);
+        continue;
+      }
+      throw new Error('unsupported line: ' + line);
+    }
+    return out.length ? out.join('\n') : '(no print output)';
+  }
+
+  // --- Lua subset: local x = ..., print(...), arithmetic ---
+  function runLua(src){
+    const env = {};
+    const lines = src.split('\n').map(l=>l.trim()).filter(Boolean);
+    let out = [];
+    function evalExpr(expr){
+      expr = expr.trim();
+      const js = expr.replace(/(["'][^"']*["'])|([A-Za-z_][A-Za-z0-9_]*)/g, (m, str, ident) => {
+        if(str) return str;
+        if(ident in env) return JSON.stringify(env[ident]);
+        if(ident === 'and') return '&&';
+        if(ident === 'or') return '||';
+        throw new Error('unbound name: '+ident);
+      });
+      return Function('"use strict"; return (' + js + ')')();
+    }
+    for(const line of lines){
+      const printMatch = line.match(/^print\((.*)\)$/);
+      if(printMatch){
+        const parts = printMatch[1].split(',').map(p=>{
+          const t = p.trim();
+          if(/^["'].*["']$/.test(t)) return t.slice(1,-1);
+          return String(evalExpr(t));
+        });
+        out.push(parts.join('\t'));
+        continue;
+      }
+      const localMatch = line.match(/^local\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+)$/);
+      if(localMatch){
+        env[localMatch[1]] = evalExpr(localMatch[2]);
+        continue;
+      }
+      const assignMatch = line.match(/^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+)$/);
+      if(assignMatch){
+        env[assignMatch[1]] = evalExpr(assignMatch[2]);
+        continue;
+      }
+      throw new Error('unsupported line: ' + line);
+    }
+    return out.length ? out.join('\n') : '(no print output)';
+  }
+
+  function runJS(src){
+    const result = Function('"use strict"; ' + src)();
+    return typeof result === 'undefined' ? '(no return value — add an expression at the end)' : String(result);
+  }
+
+  document.getElementById('run-btn').addEventListener('click', () => {
+    const src = input.value;
+    output.classList.remove('err');
+    try {
+      let res;
+      if(current==='bf') res = runBrainfuck(src);
+      else if(current==='lisp') res = runLisp(src);
+      else if(current==='rpn') res = runRPN(src);
+      else if(current==='js') res = runJS(src);
+      else if(current==='pyl') res = runPythonLite(src);
+      else if(current==='lua') res = runLua(src);
+      output.textContent = res;
+    } catch(e){
+      output.classList.add('err');
+      output.textContent = 'Error: ' + e.message;
+    }
+  });
+
+  loadLang('js');
+})();
+</script>
+
+</body>
+</html>
